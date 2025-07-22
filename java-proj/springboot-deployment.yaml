@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: springboot
+  template:
+    metadata:
+      labels:
+        app: springboot
+    spec:
+      containers:
+        - name: springboot
+          image: sskadmi/springboot-form-app:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-service:5432/persondb
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: admin
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springboot-service
+spec:
+  type: NodePort
+  selector:
+    app: springboot
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30008  # Fixed so it doesn’t change every time
