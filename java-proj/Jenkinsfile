@@ -1,0 +1,47 @@
+pipeline {
+  agent any
+
+  environment {
+    IMAGE_NAME = 'sskadmi/springboot-form-app'
+    DOCKER_CREDENTIALS_ID = 'dockerhub'
+  }
+
+  stages {
+    stage('Clone Repo') {
+      steps {
+        git 'https://github.com/sskkr999/form-demo.git'
+      }
+    }
+
+    stage('Build App') {
+      steps {
+        sh './mvnw clean package -DskipTests'
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        script {
+          docker.build("${IMAGE_NAME}:latest")
+        }
+      }
+    }
+
+    stage('Push Docker Image') {
+      steps {
+        script {
+          docker.withRegistry('', "${DOCKER_CREDENTIALS_ID}") {
+            docker.image("${IMAGE_NAME}:latest").push()
+          }
+        }
+      }
+    }
+
+    stage('Deploy to Kubernetes') {
+      steps {
+        sh 'kubectl apply -f springboot-deployment.yaml'
+        sh 'kubectl apply -f postgres-deployment.yaml'
+      }
+    }
+  }
+}
